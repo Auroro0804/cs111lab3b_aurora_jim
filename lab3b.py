@@ -43,27 +43,43 @@
 # parser = argparse.ArgumentParser()
 # parser.add_argument("filename", help="enter the csv file containing fs info that you want to analyze.")
 # args = parser.parse_args()
+from __future__ import print_function
+
 import sys
 import csv
+import sys
+import os
+
+def eprint(*args, **kwargs):
+    print(*args, file=sys.stderr, **kwargs)
 
 # check the number of arguments passed in
 if len(sys.argv) == 1:
-    print("missing argument for file name.")
-    print("Example: python lab3b.py test.csv")
+    eprint("missing argument for file name.")
+    eprint("Example: python lab3b.py test.csv")
     sys.exit(1)
 elif len(sys.argv) > 2:
-    print("Too many arguments passed in.")
-    print("Example: python lab3b.py test.csv")
+    eprint("Too many arguments passed in.")
+    eprint("Example: python lab3b.py test.csv")
     sys.exit(1)
 # check the right file type
 filename = sys.argv[1]
 if filename.split(".")[-1] != "csv":
-    print("please pass in a csv file")
+    eprint("please pass in a csv file")
+    sys.exit(1)
+try:
+    with open(filename, 'r') as f:
+        try:
+            reader = csv.reader(f)
+            fs_info = list(reader)
+        except Exception as e:
+            eprint("csv reader error")
+            sys.exit(1)
+except IOError as e:
+    eprint("I/O error({0}): {1}".format(e.errno, e.strerror))
     sys.exit(1)
 
-with open(filename, 'r') as f:
-    reader = csv.reader(f)
-    fs_info = list(reader)
+# fs_info = list(reader)
 superblock = []
 group = []
 bfree = []
@@ -87,7 +103,7 @@ for f in fs_info:
     elif f[0] == "INDIRECT":
         indirect.append(f)
     else:
-        print("WRONG")
+        eprint("WRONG")
 total_block = int(superblock[0][1])
 total_inode = int(superblock[0][2])
 block_size = int(superblock[0][3])
