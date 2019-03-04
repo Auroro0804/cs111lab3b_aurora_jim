@@ -50,17 +50,19 @@ import csv
 import sys
 import os
 
+
 def eprint(*args, **kwargs):
     print(*args, file=sys.stderr, **kwargs)
+
 
 # check the number of arguments passed in
 if len(sys.argv) == 1:
     eprint("missing argument for file name.")
-    eprint("Example: python lab3b.py test.csv")
+    eprint("Example: python3 lab3b.py test.csv")
     sys.exit(1)
 elif len(sys.argv) > 2:
     eprint("Too many arguments passed in.")
-    eprint("Example: python lab3b.py test.csv")
+    eprint("Example: python3 lab3b.py test.csv")
     sys.exit(1)
 # check the right file type
 filename = sys.argv[1]
@@ -129,7 +131,8 @@ for i in inode:
     if i[INODE_FILETYPE_POS] == 'f' or i[INODE_FILETYPE_POS] == 'd':
         for num in range(INODE_BLOCKSTART, INODE_BLOCKEND):
             if int(i[num]) < 0 or int(i[num]) > total_block:
-                print("INVALID BLOCK " + i[num] + " IN INODE " + i[INODE_NUMBER] + " AT OFFSET 0")
+                print("INVALID BLOCK " + i[num] + " IN INODE " + i[INODE_NUMBER] + " AT OFFSET " + str(int(
+                    num - INODE_BLOCKSTART)))
                 EXIT_CODE = 2
 
             elif int(i[num]) > 0:
@@ -142,7 +145,8 @@ for i in inode:
                     block_appear[int(i[num]) - 1][int(i[num])] = "file"
 
             if int(i[num]) in reserved_block:
-                print("RESERVED BLOCK " + i[num] + " IN INODE " + i[INODE_NUMBER] + " AT OFFSET 0")
+                print("RESERVED BLOCK " + i[num] + " IN INODE " + i[INODE_NUMBER] + " AT OFFSET " + str(int(
+                    num - INODE_BLOCKSTART)))
                 EXIT_CODE = 2
 
         if int(i[INODE_INDIRECT]) < 0 or int(i[INODE_INDIRECT]) > total_block:
@@ -157,7 +161,7 @@ for i in inode:
 
         if int(i[INODE_DOUBLE_INDIRECT]) < 0 or int(i[INODE_DOUBLE_INDIRECT]) > total_block:
             print("INVALID DOUBLE INDIRECT BLOCK " + i[INODE_DOUBLE_INDIRECT] + " IN INODE " + i[
-                INODE_NUMBER] + " AT OFFSET 268")
+                INODE_NUMBER] + " AT OFFSET " + str(int(12+block_size/4)))
             EXIT_CODE = 2
         elif int(i[INODE_DOUBLE_INDIRECT]) != 0:
             if block_appear[int(i[INODE_DOUBLE_INDIRECT]) - 1][int(i[INODE_DOUBLE_INDIRECT])] == "free":
@@ -168,7 +172,7 @@ for i in inode:
 
         if int(i[INODE_TRIPLE_INDIRECT]) < 0 or int(i[INODE_TRIPLE_INDIRECT]) > total_block:
             print("INVALID TRIPLE INDIRECT BLOCK " + i[INODE_TRIPLE_INDIRECT] + " IN INODE " + i[
-                INODE_NUMBER] + " AT OFFSET 65804")
+                INODE_NUMBER] + " AT OFFSET " + str(int(12+block_size/4+(block_size/4)**2)))
             EXIT_CODE = 2
         elif int(i[INODE_TRIPLE_INDIRECT]) != 0:
             if block_appear[int(i[INODE_TRIPLE_INDIRECT]) - 1][int(i[INODE_TRIPLE_INDIRECT])] == "free":
@@ -182,11 +186,11 @@ for i in inode:
             EXIT_CODE = 2
         if int(i[INODE_DOUBLE_INDIRECT]) in reserved_block:
             print("RESERVED DOUBLE INDIRECT BLOCK " + i[INODE_DOUBLE_INDIRECT] + " IN INODE " + i[
-                INODE_NUMBER] + " AT OFFSET 268")
+                INODE_NUMBER] + " AT OFFSET " + str(int(12+block_size/4)))
             EXIT_CODE = 2
         if int(i[INODE_TRIPLE_INDIRECT]) in reserved_block:
             print("RESERVED TRIPLE INDIRECT BLOCK " + i[INODE_TRIPLE_INDIRECT] + " IN INODE " + i[
-                INODE_NUMBER] + " AT OFFSET 65804")
+                INODE_NUMBER] + " AT OFFSET " + str(int(12+block_size/4+(block_size/4)**2)))
             EXIT_CODE = 2
 print(block_appear)
 for i in range(1, total_block + 1):
