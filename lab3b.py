@@ -111,6 +111,7 @@ total_block = int(superblock[0][1])
 total_inode = int(superblock[0][2])
 block_size = int(superblock[0][3])
 inode_size = int(superblock[0][4])
+first_none_reserved_inode = int(superblock[0][7])
 INODE_FILETYPE_POS = 2
 INODE_BLOCKSTART = 12
 INODE_BLOCKEND = 24
@@ -229,6 +230,19 @@ for i in inode:
 #             if int(str(j[1])) == int(i[0]):
 #                 print("ALLOCATED BLOCK " + str(i[0]) + " ON FREELIST")
 #                 EXIT_CODE = 2
+
+for i in range(first_none_reserved_inode, total_inode+1):
+    allocated = False
+    for j in inode:
+        if int(j[1]) == i:
+            allocated = True
+    on_freelist = False
+    for k in ifree:
+        if int(k[1]) == i:
+            on_freelist = True
+    if (not allocated) and (not on_freelist):
+        print("UNALLOCATED INODE " + str(i) + " NOT ON FREELIST")
+
 
 print(block_appear)
 for i in range(st, total_block + st):
