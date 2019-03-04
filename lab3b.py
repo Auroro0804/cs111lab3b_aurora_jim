@@ -121,10 +121,11 @@ INODE_NUMBER = 1
 EXIT_CODE = 0
 # reserved_block = [3]
 st = 0
-if block_size > 1024:
-    st = 0
-else:
-    st = 1
+# should check whether start from 0 or from 1 !!!
+# if block_size > 1024:
+#     st = 0
+# else:
+#     st = 1
 block_appear = {i: "unknown" for i in range(st, total_block + st)}
 # print(block_appear)
 # block_appear = [{i: "unknown"} for i in range(st, total_block + st)]
@@ -143,9 +144,10 @@ for i in range(st, first_inode + inode_table_size):
 # print(block_appear)
 # print(inode)
 for i in inode:
-    if i[INODE_FILETYPE_POS] == 'f' or i[INODE_FILETYPE_POS] == 'd':    # symbolic link with length longer than 60 bytes should also be analyzed
+    if i[INODE_FILETYPE_POS] == 'f' or i[INODE_FILETYPE_POS] == 'd' or (i[INODE_FILETYPE_POS] == 's' and len(
+            i) == 27):  # symbolic link with length longer than 60 bytes should also be analyzed
         for num in range(INODE_BLOCKSTART, INODE_BLOCKEND):
-            if int(i[num]) < 0 or int(i[num]) > total_block:
+            if int(i[num]) < 0 or int(i[num]) > total_block - 1:
                 print("INVALID BLOCK " + i[num] + " IN INODE " + i[INODE_NUMBER] + " AT OFFSET " + str(int(
                     num - INODE_BLOCKSTART)))
                 EXIT_CODE = 2
@@ -219,16 +221,16 @@ for i in inode:
         #         INODE_NUMBER] + " AT OFFSET " + str(int(12+block_size/4+(block_size/4)**2)))
         #     EXIT_CODE = 2
 
-
 # print(bfree)
-for i in block_appear.items():
-    if i[1] == "file":
-        for j in bfree:
-            if int(j[1]) == int(i[0]):
-                print("ALLOCATED BLOCK " + str(i[0]) + " ON FREELIST")
-                EXIT_CODE = 2
+# for i in block_appear.items():
+#     if i[1] == "file":
+#         print(i[0], "haha")
+#         for j in bfree:
+#             if int(str(j[1])) == int(i[0]):
+#                 print("ALLOCATED BLOCK " + str(i[0]) + " ON FREELIST")
+#                 EXIT_CODE = 2
 
-# print(block_appear)
+print(block_appear)
 for i in range(st, total_block + st):
     if block_appear[i] == 'unknown':
         print("UNREFERENCED BLOCK " + str(i))
