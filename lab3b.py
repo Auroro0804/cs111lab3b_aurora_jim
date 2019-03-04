@@ -79,7 +79,6 @@ except IOError as e:
     eprint("I/O error({0}): {1}".format(e.errno, e.strerror))
     sys.exit(1)
 
-# fs_info = list(reader)
 superblock = []
 group = []
 bfree = []
@@ -87,6 +86,7 @@ ifree = []
 dirent = []
 inode = []
 indirect = []
+wrong_entry = []
 for f in fs_info:
     if f[0] == "SUPERBLOCK":
         superblock.append(f)
@@ -103,13 +103,14 @@ for f in fs_info:
     elif f[0] == "INDIRECT":
         indirect.append(f)
     else:
-        eprint("WRONG")
+        eprint("WRONG ENTRY")
+        wrong_entry.append(f)
 total_block = int(superblock[0][1])
 total_inode = int(superblock[0][2])
 block_size = int(superblock[0][3])
 inode_size = int(superblock[0][4])
 INODE_FILETYPE_POS = 2
-INODE_BLOCKSTART = 11
+INODE_BLOCKSTART = 12
 INODE_BLOCKEND = 24
 INODE_INDIRECT = 24
 INODE_DOUBLE_INDIRECT = 25
