@@ -128,6 +128,10 @@ st = 0
 # else:
 #     st = 1
 block_appear = {i: "unknown" for i in range(st, total_block + st)}
+inode_free=[ifree[i][1] for i in range(len(ifree))]
+# num_appear= {i:-1 for i in range(st, total_block + st)}
+# type_first_appear={i:"unknown" for i in range(st, total_block + st)}
+
 # print(block_appear)
 # block_appear = [{i: "unknown"} for i in range(st, total_block + st)]
 first_inode = int(group[0][8])
@@ -135,16 +139,23 @@ inode_table_size = int(math.ceil(int(int(group[0][3]) * inode_size / block_size)
 # for i in range
 # how to calculate offset
 # which blocks are reserved ?
-print("first_inode", first_inode)
-print("inode_table_size", inode_table_size)
+# print("first_inode", first_inode)
+# print("inode_table_size", inode_table_size)
 for bf in bfree:
     block_appear[int(bf[1])] = "free"
+    # num_appear[int(bf[1])]=0
+    # type_first_appear[int(bf[1])]="free"
 for i in range(st, first_inode + inode_table_size):
     block_appear[i] = "reserved"
-
+    # num_appear[int(bf[1])]=1
+    # type_first_appear[int(bf[1])]="reserved"
+# print(block_appear)
 # print(block_appear)
 # print(inode)
 for i in inode:
+    if i[INODE_NUMBER] in inode_free:
+        print("ALLOCATED INODE "+i[INODE_NUMBER] + " ON FREELIST")
+        EXIT_CODE = 2
     if i[INODE_FILETYPE_POS] == 'f' or i[INODE_FILETYPE_POS] == 'd' or (i[INODE_FILETYPE_POS] == 's' and len(
             i) == 27):  # symbolic link with length longer than 60 bytes should also be analyzed
         for num in range(INODE_BLOCKSTART, INODE_BLOCKEND):
@@ -163,9 +174,21 @@ for i in inode:
                     print("RESERVED BLOCK " + i[num] + " IN INODE " + i[INODE_NUMBER] + " AT OFFSET " + str(int(
                         num - INODE_BLOCKSTART)))
                     EXIT_CODE = 2
+                elif block_appear[int(i[num])] == "unknown":
+                    block_appear[int(i[num])] = "BLOCK "+ i[num] + " IN INODE "+i[INODE_NUMBER]+" AT OFFSET "+ str(int(
+                    num - INODE_BLOCKSTART))
+                    # print(int(i[num]))
+                elif block_appear[int(i[num])] == "duplicated":
+                    print("DUPLICATE BLOCK " + i[num] + " IN INODE " + i[INODE_NUMBER] + " AT OFFSET " + str(int(
+                    num - INODE_BLOCKSTART)))
+                    EXIT_CODE = 2
                 else:
-                    block_appear[int(i[num])] = "file"
-                    print(int(i[num]))
+                    print("DUPLICATE "+block_appear[int(i[num])])
+                    print("DUPLICATE BLOCK " + i[num] + " IN INODE " + i[INODE_NUMBER] + " AT OFFSET " + str(int(
+                    num - INODE_BLOCKSTART)))
+                    block_appear[int(i[num])] = "duplicated"
+                    EXIT_CODE = 2
+
 
         if int(i[INODE_INDIRECT]) < 0 or int(i[INODE_INDIRECT]) > total_block:
             print("INVALID INDIRECT BLOCK " + i[INODE_INDIRECT] + " IN INODE " + i[INODE_NUMBER] + " AT OFFSET 12")
@@ -177,8 +200,16 @@ for i in inode:
             elif block_appear[int(i[INODE_INDIRECT])] == "reserved":
                 print("RESERVED INDIRECT BLOCK " + i[INODE_INDIRECT] + " IN INODE " + i[INODE_NUMBER] + " AT OFFSET 12")
                 EXIT_CODE = 2
+            elif block_appear[int(i[INODE_INDIRECT])] == "unknown":
+                block_appear[int(i[INODE_INDIRECT])] = "INDIRECT BLOCK " + i[INODE_INDIRECT] + " IN INODE " + i[INODE_NUMBER] + " AT OFFSET 12"
+            elif block_appear[int(i[INODE_INDIRECT])] == "duplicated":
+                print("DUPLICATE INDIRECT BLOCK " + i[INODE_INDIRECT] + " IN INODE " + i[INODE_NUMBER] + " AT OFFSET 12")
+                EXIT_CODE = 2
             else:
-                block_appear[int(i[INODE_INDIRECT])] = "file"
+                print("DUPLICATE "+block_appear[int(i[INODE_INDIRECT])])
+                print("DUPLICATE INDIRECT BLOCK " + i[INODE_INDIRECT] + " IN INODE " + i[INODE_NUMBER] + " AT OFFSET 12")
+                block_appear[int(i[INODE_INDIRECT])] = "duplicated"
+                EXIT_CODE = 2
 
         if int(i[INODE_DOUBLE_INDIRECT]) < 0 or int(i[INODE_DOUBLE_INDIRECT]) > total_block:
             print("INVALID DOUBLE INDIRECT BLOCK " + i[INODE_DOUBLE_INDIRECT] + " IN INODE " + i[
@@ -192,8 +223,17 @@ for i in inode:
                 print("RESERVED DOUBLE INDIRECT BLOCK " + i[INODE_DOUBLE_INDIRECT] + " IN INODE " + i[
                     INODE_NUMBER] + " AT OFFSET " + str(int(12 + block_size / 4)))
                 EXIT_CODE = 2
+            elif block_appear[int(i[INODE_DOUBLE_INDIRECT])]=="unknown":
+                block_appear[int(i[INODE_DOUBLE_INDIRECT])] = "DOUBLE INDIRECT BLOCK " + i[INODE_DOUBLE_INDIRECT] + " IN INODE " + i[
+                    INODE_NUMBER] + " AT OFFSET " + str(int(12 + block_size / 4))
+            elif block_appear[int(i[INODE_DOUBLE_INDIRECT])] == "duplicated":
+                print("DUPLICATE DOUBLE INDIRECT BLOCK " + i[INODE_DOUBLE_INDIRECT] + " IN INODE " + i[INODE_NUMBER] + " AT OFFSET "+str(int(12 + block_size / 4)))
+                EXIT_CODE = 2
             else:
-                block_appear[int(i[INODE_DOUBLE_INDIRECT])] = "file"
+                print("DUPLICATE "+block_appear[int(i[INODE_DOUBLE_INDIRECT])])
+                print("DUPLICATE DOUBLE INDIRECT BLOCK " + i[INODE_DOUBLE_INDIRECT] + " IN INODE " + i[INODE_NUMBER] + " AT OFFSET "+str(int(12 + block_size / 4)))
+                block_appear[int(i[INODE_DOUBLE_INDIRECT])] = "duplicated"
+                EXIT_CODE = 2
 
         if int(i[INODE_TRIPLE_INDIRECT]) < 0 or int(i[INODE_TRIPLE_INDIRECT]) > total_block:
             print("INVALID TRIPLE INDIRECT BLOCK " + i[INODE_TRIPLE_INDIRECT] + " IN INODE " + i[
@@ -207,31 +247,20 @@ for i in inode:
                 print("RESERVED TRIPLE INDIRECT BLOCK " + i[INODE_TRIPLE_INDIRECT] + " IN INODE " + i[
                     INODE_NUMBER] + " AT OFFSET " + str(int(12 + block_size / 4 + (block_size / 4) ** 2)))
                 EXIT_CODE = 2
+
+            elif block_appear[int(i[INODE_TRIPLE_INDIRECT])]=="unknown":
+                block_appear[int(i[INODE_TRIPLE_INDIRECT])] = "TRIPLE INDIRECT BLOCK " + i[INODE_TRIPLE_INDIRECT] + " IN INODE " + i[
+                    INODE_NUMBER] + " AT OFFSET " + str(int(12 + block_size / 4 + (block_size / 4) ** 2))
+            elif block_appear[int(i[INODE_TRIPLE_INDIRECT])] == "duplicated":
+                print("DUPLICATE TRIPLE INDIRECT BLOCK " + i[INODE_TRIPLE_INDIRECT] + " IN INODE " + i[INODE_NUMBER] + " AT OFFSET "+str(int(12 + block_size / 4 + (block_size / 4) ** 2)))
+                EXIT_CODE = 2
             else:
-                block_appear[int(i[INODE_TRIPLE_INDIRECT])] = "file"
+                print("DUPLICATE "+block_appear[int(i[INODE_TRIPLE_INDIRECT])])
+                print("DUPLICATE TRIPLE INDIRECT BLOCK " + i[INODE_TRIPLE_INDIRECT] + " IN INODE " + i[INODE_NUMBER] + " AT OFFSET "+str(int(12 + block_size / 4 + (block_size / 4) ** 2)))
+                block_appear[int(i[INODE_TRIPLE_INDIRECT])] = "duplicated"
+                EXIT_CODE = 2
 
-        # if int(i[INODE_INDIRECT]) in reserved_block:
-        #     print("RESERVED INDIRECT BLOCK " + i[INODE_INDIRECT] + " IN INODE " + i[INODE_NUMBER] + " AT OFFSET 12")
-        #     EXIT_CODE = 2
-        # if int(i[INODE_DOUBLE_INDIRECT]) in reserved_block:
-        #     print("RESERVED DOUBLE INDIRECT BLOCK " + i[INODE_DOUBLE_INDIRECT] + " IN INODE " + i[
-        #         INODE_NUMBER] + " AT OFFSET " + str(int(12+block_size/4)))
-        #     EXIT_CODE = 2
-        # if int(i[INODE_TRIPLE_INDIRECT]) in reserved_block:
-        #     print("RESERVED TRIPLE INDIRECT BLOCK " + i[INODE_TRIPLE_INDIRECT] + " IN INODE " + i[
-        #         INODE_NUMBER] + " AT OFFSET " + str(int(12+block_size/4+(block_size/4)**2)))
-        #     EXIT_CODE = 2
-
-# print(bfree)
-# for i in block_appear.items():
-#     if i[1] == "file":
-#         print(i[0], "haha")
-#         for j in bfree:
-#             if int(str(j[1])) == int(i[0]):
-#                 print("ALLOCATED BLOCK " + str(i[0]) + " ON FREELIST")
-#                 EXIT_CODE = 2
-
-for i in range(first_none_reserved_inode, total_inode+1):
+for i in range(first_none_reserved_inode, total_inode + 1):
     allocated = False
     for j in inode:
         if int(j[1]) == i:
@@ -242,7 +271,42 @@ for i in range(first_none_reserved_inode, total_inode+1):
             on_freelist = True
     if (not allocated) and (not on_freelist):
         print("UNALLOCATED INODE " + str(i) + " NOT ON FREELIST")
+        EXIT_CODE = 2
 
+invalid_and_unallocated_inodes = []
+
+for d in dirent:
+    if int(d[3]) < 1 or int(d[3]) > total_inode:
+        print("DIRECTORY INODE " + str(d[1]) + " NAME " + d[6] + " INVALID INODE " + str(d[3]))
+        invalid_and_unallocated_inodes.append(d[3])
+        EXIT_CODE = 2
+    for i in ifree:
+        if int(i[1]) == int(d[3]):
+            print("DIRECTORY INODE " + str(d[1]) + " NAME " + d[6] + " UNALLOCATED INODE " + str(i[1]))
+            invalid_and_unallocated_inodes.append(d[3])
+            EXIT_CODE = 2
+
+for d in dirent:
+    if (d[1] != d[3]) and (d[6] == "\'.\'"):
+        print("DIRECTORY INODE " + str(d[1]) + " NAME '.' LINK TO INODE " + str(d[3]) + " SHOULD BE " + str(d[1]))
+        EXIT_CODE = 2
+
+parents_and_childs = {}
+for d in dirent:
+    if (int(d[3]) not in invalid_and_unallocated_inodes) and (d[6] != "\'.\'") and (d[6] != "\'..\'"):
+        parents_and_childs.update({int(d[3]): int(d[1])})  # child: parent
+
+for d in dirent:
+    if (int(d[3]) not in invalid_and_unallocated_inodes) and (d[6] == "\'..\'"):
+        if int(d[1]) == 2:
+            if int(d[3]) != 2:
+                print("DIRECTORY INODE 2 NAME '..' LINK TO INODE " + str(d[3]) + " SHOULD BE 2")
+                EXIT_CODE = 2
+        else:
+            if int(d[3]) != parents_and_childs[int(d[1])]:
+                print("DIRECTORY INODE " + str(d[1]) + " NAME '..' LINK TO INODE " + str(d[3]) + " SHOULD BE " + str(
+                    parents_and_childs[int(d[1])]))
+                EXIT_CODE = 2
 
 print(block_appear)
 for i in range(st, total_block + st):
