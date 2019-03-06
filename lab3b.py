@@ -352,10 +352,10 @@ for d in dirent:
         print("DIRECTORY INODE " + str(d[1]) + " NAME '.' LINK TO INODE " + str(d[3]) + " SHOULD BE " + str(d[1]))
         EXIT_CODE = 2
 
-parents_and_childs = {}
+parents_and_children = {}
 for d in dirent:
     if (int(d[3]) not in invalid_and_unallocated_inodes) and (d[6] != "\'.\'") and (d[6] != "\'..\'"):
-        parents_and_childs.update({int(d[3]): int(d[1])})  # child: parent
+        parents_and_children.update({int(d[3]): int(d[1])})  # child: parent
 
 for d in dirent:
     if (int(d[3]) not in invalid_and_unallocated_inodes) and (d[6] == "\'..\'"):
@@ -364,9 +364,9 @@ for d in dirent:
                 print("DIRECTORY INODE 2 NAME '..' LINK TO INODE " + str(d[3]) + " SHOULD BE 2")
                 EXIT_CODE = 2
         else:
-            if int(d[3]) != parents_and_childs[int(d[1])]:
+            if int(d[3]) != parents_and_children[int(d[1])]:
                 print("DIRECTORY INODE " + str(d[1]) + " NAME '..' LINK TO INODE " + str(d[3]) + " SHOULD BE " + str(
-                    parents_and_childs[int(d[1])]))
+                    parents_and_children[int(d[1])]))
                 EXIT_CODE = 2
 
 # print(block_appear)
