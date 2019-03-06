@@ -152,7 +152,10 @@ for i in range(st, first_inode + inode_table_size):
 # print(block_appear)
 # print(block_appear)
 # print(inode)
+inode_link_num={i:0 for i in range(1,total_inode+1)}
+INODE_LINK_POSITION=6
 for i in inode:
+    inode_link_num[int(i[INODE_NUMBER])]=int(i[INODE_LINK_POSITION])
     if i[INODE_NUMBER] in inode_free:
         print("ALLOCATED INODE "+i[INODE_NUMBER] + " ON FREELIST")
         EXIT_CODE = 2
@@ -274,12 +277,15 @@ for i in range(first_none_reserved_inode, total_inode + 1):
         EXIT_CODE = 2
 
 invalid_and_unallocated_inodes = []
-
+inode_appear={i:0 for i in range(1,total_inode+1)}
+DIRENT_INODE_POS=3
 for d in dirent:
     if int(d[3]) < 1 or int(d[3]) > total_inode:
         print("DIRECTORY INODE " + str(d[1]) + " NAME " + d[6] + " INVALID INODE " + str(d[3]))
         invalid_and_unallocated_inodes.append(d[3])
         EXIT_CODE = 2
+    else:
+        inode_appear[int(d[3])]+=1
     for i in ifree:
         if int(i[1]) == int(d[3]):
             print("DIRECTORY INODE " + str(d[1]) + " NAME " + d[6] + " UNALLOCATED INODE " + str(i[1]))
@@ -313,4 +319,8 @@ for i in range(st, total_block + st):
     if block_appear[i] == 'unknown':
         print("UNREFERENCED BLOCK " + str(i))
         EXIT_CODE = 2
+for i in range(1,total_inode+1):
+    if inode_link_num[i] != inode_appear[i]:
+        print("INODE "+str(i)+" HAS "+str(inode_appear[i])+" LINKS BUT LINKCOUNT IS "+str(inode_link_num[i]))
+        EXIT_CODE=2
 sys.exit(EXIT_CODE)
