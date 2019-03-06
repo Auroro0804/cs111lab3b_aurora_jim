@@ -1,48 +1,3 @@
-# block consistency audit
-# An INVALID block is one whose number is less than zero
-# or greater than the highest block in the file system.
-
-# A RESERVED block is one that could not legally be allocated to any file
-# because it should be reserved for file system metadata
-
-# INVALID BLOCK 101 IN INODE 13 AT OFFSET 0
-# INVALID INDIRECT BLOCK 101 IN INODE 13 AT OFFSET 12
-# INVALID DOUBLE INDIRECT BLOCK 101 IN INODE 13 AT OFFSET 268
-# INVALID TRIPLE INDIRECT BLOCK 101 IN INODE 13 AT OFFSET 65804
-# RESERVED INDIRECT BLOCK 3 IN INODE 13 AT OFFSET 12
-# RESERVED DOUBLE INDIRECT BLOCK 3 IN INODE 13 AT OFFSET 268
-# RESERVED TRIPLE INDIRECT BLOCK 3 IN INODE 13 AT OFFSET 65804
-# RESERVED BLOCK 3 IN INODE 13 AT OFFSET 0
-
-# If a block is not referenced by any file and is not on the free list,
-# a message like the following should be generated to stdout:
-# UNREFERENCED BLOCK 37
-
-# A block that is allocated to some file might also appear on the free list.
-# In this case a message like the following should be generated to stdout:
-# ALLOCATED BLOCK 8 ON FREELIST
-
-# If a legal block is referenced by multiple files (or even multiple times in a single file),
-# messages like the following (depending on precisely where the references are) should be generated to stdout
-# for each reference to that block:
-# DUPLICATE BLOCK 8 IN INODE 13 AT OFFSET 0
-# DUPLICATE INDIRECT BLOCK 8 IN INODE 13 AT OFFSET 12
-# DUPLICATE DOUBLE INDIRECT BLOCK 8 IN INODE 13 AT OFFSET 268
-# DUPLICATE TRIPLE INDIRECT BLOCK 8 IN INODE 13 AT OFFSET 65804
-
-
-# inode allocation audit 
-# Compare your list of allocated/unallocated I-nodes with the free I-node bitmaps,
-# and for each discovered inconsistency, a message like one of the following should be generated to stdout:
-# ALLOCATED INODE 2 ON FREELIST
-# UNALLOCATED INODE 17 NOT ON FREELIST
-
-# directory consistency audit
-
-# import argparse
-# parser = argparse.ArgumentParser()
-# parser.add_argument("filename", help="enter the csv file containing fs info that you want to analyze.")
-# args = parser.parse_args()
 from __future__ import print_function
 
 import sys
@@ -66,9 +21,6 @@ elif len(sys.argv) > 2:
     sys.exit(1)
 # check the right file type
 filename = sys.argv[1]
-# if filename.split(".")[-1] != "csv":
-#     eprint("please pass in a csv file")
-#     sys.exit(1)
 try:
     with open(filename, 'r') as f:
         try:
@@ -119,38 +71,17 @@ INODE_DOUBLE_INDIRECT = 25
 INODE_TRIPLE_INDIRECT = 26
 INODE_NUMBER = 1
 EXIT_CODE = 0
-# reserved_block = [3]
 st = 0
-# should check whether start from 0 or from 1 !!!
-# if block_size > 1024:
-#     st = 0
-# else:
-#     st = 1
 block_appear = {i: "unknown" for i in range(st, total_block + st)}
 inode_free = [ifree[i][1] for i in range(len(ifree))]
-# num_appear= {i:-1 for i in range(st, total_block + st)}
-# type_first_appear={i:"unknown" for i in range(st, total_block + st)}
-
-# print(block_appear)
-# block_appear = [{i: "unknown"} for i in range(st, total_block + st)]
 first_inode = int(group[0][8])
 inode_table_size = int(math.ceil(int(int(group[0][3]) * inode_size / block_size)))  # in unit of blocks
-# for i in range
-# how to calculate offset
-# which blocks are reserved ?
-# print("first_inode", first_inode)
-# print("inode_table_size", inode_table_size)
 for bf in bfree:
     block_appear[int(bf[1])] = "free"
-    # num_appear[int(bf[1])]=0
-    # type_first_appear[int(bf[1])]="free"
+
 for i in range(st, first_inode + inode_table_size):
     block_appear[i] = "reserved"
-    # num_appear[int(bf[1])]=1
-    # type_first_appear[int(bf[1])]="reserved"
-# print(block_appear)
-# print(block_appear)
-# print(inode)
+
 inode_link_num = {i: 0 for i in range(1, total_inode + 1)}
 INODE_LINK_POSITION = 6
 for i in inode:
