@@ -66,9 +66,9 @@ elif len(sys.argv) > 2:
     sys.exit(1)
 # check the right file type
 filename = sys.argv[1]
-if filename.split(".")[-1] != "csv":
-    eprint("please pass in a csv file")
-    sys.exit(1)
+# if filename.split(".")[-1] != "csv":
+#     eprint("please pass in a csv file")
+#     sys.exit(1)
 try:
     with open(filename, 'r') as f:
         try:
@@ -88,7 +88,6 @@ ifree = []
 dirent = []
 inode = []
 indirect = []
-wrong_entry = []
 for f in fs_info:
     if f[0] == "SUPERBLOCK":
         superblock.append(f)
@@ -106,7 +105,7 @@ for f in fs_info:
         indirect.append(f)
     else:
         eprint("WRONG ENTRY")
-        wrong_entry.append(f)
+        sys.exit(1)
 total_block = int(superblock[0][1])
 total_inode = int(superblock[0][2])
 block_size = int(superblock[0][3])
